@@ -4,38 +4,32 @@
 
 void poke_b (MEM_ADDR addr, BYTE value)
 {
-	BYTE* ptr = (BYTE*) addr;
-	*ptr = value;
+    *((BYTE*) addr) = value;
 }
 
 void poke_w (MEM_ADDR addr, WORD value)
-{	
-	WORD* ptr = (WORD*) addr;
-	*ptr = value;
+{
+    *((WORD*) addr) = value;
 }
 
 void poke_l (MEM_ADDR addr, LONG value)
 {
-	LONG* ptr = (LONG*) addr;
-	*ptr = value;
+    *((LONG*) addr) = value;
 }
 
 BYTE peek_b (MEM_ADDR addr)
 {
-	BYTE* ptr = (BYTE*) addr;
-	return *ptr;
+    return *((BYTE*) addr);
 }
 
 WORD peek_w (MEM_ADDR addr)
 {
-	WORD* ptr = (WORD*) addr;
-	return *ptr;
+    return *((WORD*) addr);
 }
 
 LONG peek_l (MEM_ADDR addr)
 {
-	LONG* ptr = (LONG*) addr;
-	return *ptr;
+    return *((LONG*) addr);
 }
 
 

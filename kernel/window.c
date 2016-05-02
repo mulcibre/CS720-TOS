@@ -1,198 +1,149 @@
 
 #include <kernel.h>
 
-static const int videoBufferStart = 0xB8000;
-static const char blankSpace = ' ';
-static char charUnderCursor = ' ';
 
-/*
-– 25 rows (numbered 0-24)
-– 80 columns (numbered 0-79)
-– top left corner of screen: row 0, column 0
-– lower right corner of screen: row 24, column 79
-– screen can display 2000 (25 X 80) characters 
-*/
-void setCharAtCoord(char c, int x, int y)
+#define SCREEN_BASE_ADDR 0xb8000
+#define SCREEN_WIDTH     80
+#define SCREEN_HEIGHT    25
+
+
+WORD default_color = 0x0f;
+
+
+
+void poke_screen(int x, int y, WORD ch)
 {
-    //  generate memory offset by screen dimensions above
-    int addressToPoke = videoBufferStart + (x * 2) + (y * 160);
-    //	set desired character
-    poke_b(addressToPoke, c);
-
-    //	set desired color
-    poke_b(addressToPoke + 1, 0x0F);
+    poke_w(SCREEN_BASE_ADDR + y * SCREEN_WIDTH * 2 + x * 2, ch);
 }
 
-void setCharAtCoordInWindow(WINDOW* wnd, char c, int x, int y)
+
+
+WORD peek_screen(int x, int y)
 {
-    //  generate memory offset by screen dimensions above
-    // 	add window origin offsets for x and y
-    x += wnd->x;
-    y += wnd->y;
-   	setCharAtCoord(c, x, y);
+    return peek_w(SCREEN_BASE_ADDR + y * SCREEN_WIDTH * 2 + x * 2);
 }
 
-char getCharAtCoord(int x, int y)
-{
-    //  generate memory offset by screen dimensions above
-    int addressToPeek = videoBufferStart + (x * 2) + (y * 160);
-    return (char)peek_b((MEM_ADDR) addressToPeek);
-}
 
-char getCharAtCoordInWindow(WINDOW* wnd, int x, int y)
-{
-	x += wnd->x;
-    y += wnd->y;
-   	getCharAtCoord(x, y);
-}
 
-void shiftWindowBuffer(WINDOW* wnd)
-{	
-    int x, y;
-    for(y = 0; y < wnd->height - 1; y++)
-    {
-        for(x = 0; x < wnd->width; x++)
-        {
-            setCharAtCoordInWindow(wnd, getCharAtCoordInWindow(wnd, x, y + 1), x, y);
-        }
+void scroll_window(WINDOW* wnd)
+{
+    int          x, y;
+    int          wx, wy;
+    volatile int flag;
+
+    DISABLE_INTR (flag);
+    for (y = 0; y < wnd->height - 1; y++) {
+	wy = wnd->y + y;
+	for (x = 0; x < wnd->width; x++) {
+	    wx = wnd->x + x;
+	    WORD ch = peek_screen(wx, wy + 1);
+	    poke_screen(wx, wy, ch);
+	}
     }
-    //  Clear last line
-    x = 0;
-    for(; x < wnd->width; x++)
-    {
-        setCharAtCoordInWindow(wnd, blankSpace, x, wnd->height - 1);
+    wy = wnd->y + wnd->height - 1;
+    for (x = 0; x < wnd->width; x++) {
+	wx = wnd->x + x;
+	poke_screen(wx, wy, 0);
     }
-    move_cursor(wnd, 0, wnd->height - 1);
+    wnd->cursor_x = 0;
+    wnd->cursor_y = wnd->height - 1;
+    ENABLE_INTR (flag);
 }
 
-/* Window Struct
-typedef struct {
-  int  x, y;
-  int  width, height;
-  int  cursor_x, cursor_y;
-  char cursor_char;
-} WINDOW;
-*/
+
 void move_cursor(WINDOW* wnd, int x, int y)
 {
-    /*
-      The position of the cursor is set to be (x, y). Note that this
-position has to be within the boundaries of the window. The
-position is relative to the top-left corner of the window.   
-        */
-    //char temp = getCharAtCoord(x, y);
-    //  set old cursor location to have previous character
-    //setCharAtCoord(charUnderCursor, wnd->cursor_x, wnd->cursor_y);
     assert(x < wnd->width && y < wnd->height);
     wnd->cursor_x = x;
     wnd->cursor_y = y;
-    //setCharAtCoord(wnd->cursor_char, x, y);
 }
 
 
 void remove_cursor(WINDOW* wnd)
 {
-    setCharAtCoord(' ', wnd->cursor_x, wnd->cursor_y);
+    poke_screen(wnd->x + wnd->cursor_x,
+		wnd->y + wnd->cursor_y, ' ');
 }
 
 
 void show_cursor(WINDOW* wnd)
 {
-    /*
-    Shows the cursor of the window by displaying cursor_char at
-    the current position of the cursor location. 
-    */
-    setCharAtCoord(wnd->cursor_char, wnd->cursor_x, wnd->cursor_y);
+    poke_screen(wnd->x + wnd->cursor_x,
+		wnd->y + wnd->cursor_y,
+		wnd->cursor_char | (default_color << 8));
 }
 
 
 void clear_window(WINDOW* wnd)
 {
-    /*
-    Clear the window. Content of the window is erased and the
-    cursor is placed at the top left corner of the window. 
-    */
-    int x = wnd->x;
-    int y = wnd->y;
-    for(; x < wnd->width; x++)
-    {
-        for(; y < wnd->height; y++)
-        {
-            setCharAtCoord(blankSpace, x, y);
-        }
+    int x, y;
+    int wx, wy;
+
+    volatile int flag;
+
+    DISABLE_INTR (flag);
+    wnd->cursor_x = 0;
+    wnd->cursor_y = 0;
+    for (y = 0; y < wnd->height; y++) {
+	wy = wnd->y + y;
+	for (x = 0; x < wnd->width; x++) {
+	    wx = wnd->x + x;
+	    poke_screen(wx, wy, 0);
+	}
     }
-    charUnderCursor = blankSpace;
-    
-    wnd->cursor_x = wnd->x;
-    wnd->cursor_y = wnd->y;
+    show_cursor(wnd);
+    ENABLE_INTR (flag);
 }
+
 
 void output_char(WINDOW* wnd, unsigned char c)
 {
-    /*
-    ‘ch’ is displayed at the current cursor location of the window.
-    The cursor is advanced to the next location. 
-    */
-    // newline check, or carriage return
-    if(c == '\n' || c == 13)
-    {
-       if(wnd->cursor_y >= wnd->height - 1)
-       {
-           //cursor is on last line, scroll window
-           shiftWindowBuffer(wnd);
-       	}
-       	else
-       	{
-       		move_cursor(wnd, 0, wnd->cursor_y + 1);
-   		}
+    volatile int flag;
+
+    DISABLE_INTR (flag);
+    remove_cursor(wnd);
+    switch (c) {
+    case '\n':
+    case 13:
+	wnd->cursor_x = 0;
+	wnd->cursor_y++;
+	break;
+    case '\b':
+	if (wnd->cursor_x != 0) {
+	    wnd->cursor_x--;
+	} else {
+	    if (wnd->cursor_y != 0) {
+		wnd->cursor_x = wnd->width - 1;
+		wnd->cursor_y--;
+	    }
+	}
+	break;
+    default:
+	poke_screen(wnd->x + wnd->cursor_x,
+		    wnd->y + wnd->cursor_y,
+		    (short unsigned int) c | (default_color << 8));
+	wnd->cursor_x++;
+	if (wnd->cursor_x == wnd->width) {
+	    wnd->cursor_x = 0;
+	    wnd->cursor_y++;
+	}
+	break;
     }
-    //backspace
-    else if(c == '\b')
-    {
-    	if (wnd->cursor_x != 0) 
-    	{
-	    	wnd->cursor_x--;
-		}
-    }
-    else
-    {
-        //  set desired character at cursor position
-        setCharAtCoordInWindow(wnd, c, wnd->cursor_x, wnd->cursor_y);
-        if(wnd->cursor_x >= wnd->width - 1)
-        {
-            if(wnd->cursor_y >= wnd->height - 1)
-            {
-                //cursor is on last line, scroll window
-                shiftWindowBuffer(wnd);
-            }
-            else
-            {
-            // cursor was at end of line? move to next line
-            move_cursor(wnd, 0, wnd->cursor_y + 1);
-        	}
-        }
-        else
-        {	
-            move_cursor(wnd, wnd->cursor_x + 1, wnd->cursor_y);
-        }
-    }
+    if (wnd->cursor_y == wnd->height)
+	scroll_window(wnd);
+    show_cursor(wnd);
+    ENABLE_INTR (flag);
 }
 
 
 
-void output_string(WINDOW* wnd, const char* str)
+void output_string(WINDOW* wnd, const char *str)
 {
-    /*
-    ‘str’ is a string that is displayed in the window. The cursor is
-    advanced accordingly. 
-    */
-    int index = 0;
-    while(str[index] != 0)
-    {
-        output_char(wnd, str[index]);
-        index++;
-    }
+    while (*str != '\0')
+	output_char(wnd, *str++);
 }
+
+
 
 /*
  * There is not need to make any changes to the code below,
@@ -213,8 +164,8 @@ char *printnum(char *b, unsigned int u, int base,
     
     digs = upcase ? up_digs : low_digs;
     do {
-	    *p-- = digs[ u % base ];
-	    u /= base;
+	*p-- = digs[ u % base ];
+	u /= base;
     } while( u != 0 );
     
     if (negflag)
