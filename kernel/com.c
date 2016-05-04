@@ -6,12 +6,11 @@
  * http://www.lammertbies.nl/comm/info/RS-232.html
  *
  */
-
-
 #include <kernel.h>
 
 PORT com_port;
 
+WINDOW dbg_wnd = {60, 0, 10, 10, 0, 0, ' '};
 
 void init_uart()
 {
@@ -79,6 +78,7 @@ void com_process (PROCESS self, PARAM param)
     while (42) {
 	msg = (COM_Message*) receive (&sender_proc);
 	message (com_reader_port, msg);
+	//debugPrint(msg);	
 	send_cmd_to_com (msg->output_buffer);
 	receive (&recv_proc);
 	/*assert (recv_proc == com_reader_proc);*/
@@ -92,4 +92,15 @@ void init_com ()
     init_uart();
     com_port = create_process (com_process, 6, 0, "COM process");
     resign();
+}
+
+void debugPrint(COM_Message* msg)
+{
+	wprintf(&dbg_wnd, "test out\n");
+	int i;
+	for(i = 0; i < msg->len_input_buffer; i++)
+	{
+		
+		output_char(&dbg_wnd, msg->input_buffer[i]);
+	}
 }
