@@ -96,6 +96,7 @@ void train_process(PROCESS self, PARAM param)
 	train_set_switch('1', 'G');
 	train_set_switch('5', 'G');
 	train_set_switch('9', 'R');
+	train_set_switch('4', 'G');
 	
 	set_train_speed("5");
 	
