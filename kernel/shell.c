@@ -1,4 +1,6 @@
 #include <kernel.h>
+//#include <trainCommands.h>
+
 PORT shell_port;
 WINDOW shell_wnd = {0, 9, 61, 16, 0, 0, 0xDC};
 WINDOW train_wnd = {0, 0, 80, 8, 0, 0, ' '};
@@ -136,151 +138,6 @@ void get_params(char* userIn, char* param1, char* param2, char* param3)
 }
 
 /*
-	Train Controls (temporary)
-*/
-
-void set_train_speed_shell(char* speed)
-{
-	COM_Message msg;
-	char buffer [128];
-	msg.input_buffer = buffer;
-	
-	//	print output to console
-	wprintf(&train_wnd, "Setting speed to: ");
-	wprintf(&train_wnd, speed);
-	wprintf(&train_wnd, "\n");
-	
-	//	configure message payload
-	msg.output_buffer = "L20Sx\015";
-	msg.output_buffer[4] = *speed;
-	
-	//	msg input buffer length MUST be 0 for payloads that do not have a response
-	msg.len_input_buffer = 0;
-	wprintf(&train_wnd, msg.output_buffer);
-	send(com_port,&msg);
-	
-	sleep(WAIT_TICKS);
-}
-
-void train_clear_mem_buffer_shell()
-{
-	wprintf(&train_wnd, "Clearing S88 memory buffer\n");
-	send_train_command("R\015", "", 0);
-}
-
-void train_switch_directions_shell(int speed)
-{
-	if(speed == 0)
-	{
-		wprintf(&train_wnd, "Changing train direction\n");
-		send_train_command("L20D\015", "", 0);
-	}
-	else
-	{
-		wprintf(&train_wnd, "Train must be stopped during direction changes. Dare you risk Dr. Puders wrath?\n");		
-	}
-}
-
-void train_set_switch_shell(char* switchNum, char* position)
-{
-	//	switchNum may be any num char from '1' to '9'
-	//	position may be 'G' or 'R' only
-	if(switchNum < '1' || switchNum > '9')
-	{
-		wprintf(&train_wnd, "Invalid switch identifier\n");	
-		return;
-	}
-	if(position != 'G' && position != 'R')
-	{
-		wprintf(&train_wnd, "Invalid switch position\n");	
-		return;
-	}
-	
-	wprintf(&train_wnd, "Setting switch ");
-	wprintf(&train_wnd, &switchNum);
-	wprintf(&train_wnd, " to ");
-	wprintf(&train_wnd, &position);
-	wprintf(&train_wnd,"\n");
-	
-	char switchCommand[] = "M##\015";
-	switchCommand[1] = switchNum;
-	switchCommand[2] = position;
-		
-	send_train_command(switchCommand, "", 0);
-}
-
-int get_status_of_contact_shell(char* trackSection)
-{
-	//	S88 memory MUST be cleared before checking the status of a track
-	train_clear_mem_buffer_shell();
-	
-	//	Track segment query can always be double digits e.g. 05
-	char trackQueryCommand[] = "C00\015";
-	
-	wprintf(&train_wnd, "param2: ");
-	wprintf(&train_wnd, trackSection);
-	wprintf(&train_wnd, "\n");
-	
-	//	single digit input, between 1 and 9
-	if((trackSection[0] >= '1' && trackSection[0] <= '9') && trackSection[1] == 0)
-	{
-		//	single digit condition succeeded
-		trackQueryCommand[2] = trackSection[0];
-	}
-	else if(trackSection[0] == '1' && (trackSection[1] >= '0' && trackSection[1] <= '6'))
-	{
-		//	double digit condition succeeded
-		trackQueryCommand[1] = trackSection[0];
-		trackQueryCommand[2] = trackSection[1];
-	}
-	else
-	{
-		//	no success conditions	
-		wprintf(&train_wnd, "Invalid track id entered, must be from 1-16\n");
-		return -1;		
-	}
-	wprintf(&train_wnd, "command: ");
-	wprintf(&train_wnd, trackQueryCommand);
-	wprintf(&train_wnd, "\n");
-	return send_train_command_shell(trackQueryCommand, "0\0", 3);
-	
-}
-
-int send_train_command_shell(char* outBuf, char* inBuf, int len_inBuf)
-{
-	COM_Message msg;
-	int retVal = 0;
-	//	configure message payload
-	msg.input_buffer = inBuf;	
-	msg.output_buffer = outBuf;
-	msg.len_input_buffer = len_inBuf;
-	
-	//	message does not require a reply
-	//	send requires a reply
-	//	send message to com port, wait a safe amount of time
-	send(com_port,&msg);
-	
-	if(len_inBuf)
-	{
-		wprintf(&train_wnd, "Returned value from request: ");
-		wprintf(&train_wnd, &msg.input_buffer[1]);
-		wprintf(&train_wnd, "\n");
-	}
-	
-	//	return value in input buffer, used for probing track sections
-	if(msg.input_buffer[1] == '1')
-	{
-		retVal = 1;
-	}
-	
-	//	debug print command message
-	//wprintf(&train_wnd, msg.output_buffer);
-	sleep(WAIT_TICKS);
-	return retVal;
-}
-
-
-/*
 	Shell Process with Command Loop
 */
 
@@ -387,14 +244,16 @@ int executeCommand(char* command, char* param1, char* param2)
 		{
 			if(stringCompare(param1, "clear") == 0 && stringCompare(param2, "") == 0)
 			{
-				train_clear_mem_buffer_shell();
+				train_clear_mem_buffer();
+				return 0;
 			}
 			//	train speed setting
 			else if(stringCompare(param1, "speed") == 0)
 			{
 				if(param2[1] == 0 && param2[0] >= '0' && param2[0] <= '5')
 				{
-					set_train_speed_shell(&param2[0]);
+					set_train_speed(&param2[0]);
+					return 0;
 				}
 				else
 				{
@@ -421,7 +280,7 @@ int executeCommand(char* command, char* param1, char* param2)
 					wprintf(&shell_wnd, "Invalid switch position\n");	
 					return -1;
 				}
-				train_set_switch_shell(param2[0], param2[1]);
+				train_set_switch(param2[0], param2[1]);
 				return 0;
 			}
 			else if(stringCompare(param1, "see") == 0)
@@ -434,7 +293,7 @@ int executeCommand(char* command, char* param1, char* param2)
 				   }
 				   else
 				   {
-					   	if(!get_status_of_contact_shell(param2))
+					   	if(get_status_of_contact(param2) == 0)
 						{
 							wprintf(&shell_wnd, "train not detected\n");
 						}
@@ -444,7 +303,15 @@ int executeCommand(char* command, char* param1, char* param2)
 					   		wprintf(&shell_wnd, param2);
 					   		wprintf(&shell_wnd, "\n");
 					   	}
+					   return 0;
 				   }
+			}
+			else if(stringCompare(param1, "rev") == 0)
+			{
+				wprintf(&shell_wnd, "Reversing train direction\n");
+				train_switch_directions();
+				//switch_train_direction(&train_wnd);
+				return 0;
 			}
 			else if(stringCompare(param1, "run") == 0 && stringCompare(param2, "") == 0)
 			{
@@ -465,11 +332,10 @@ int executeCommand(char* command, char* param1, char* param2)
 			init_pacman(&pacMan_wnd,4);
 			return 0;
 		}
-		else
-		{
-			wprintf(&shell_wnd, "Invalid Command. Enter 'help' for list of commands\n");
-			return -1;
-		}
+		//	No correct command was entered
+		wprintf(&shell_wnd, "Invalid Command. Enter 'help' for list of commands\n");
+		return -1;
+		
 }
 
 int stringCompare(char* str1, char* str2)
@@ -519,6 +385,7 @@ void showHelp()
 	wprintf(&shell_wnd, "pacman           ----    initializes pacman process\n");
 	wprintf(&shell_wnd, "train run        ----    run train script\n");
 	wprintf(&shell_wnd, "train speed #    ----    set train to speed, # must be 0-5\n");
+	wprintf(&shell_wnd, "train rev        ----    reverse train direction, speed must be 0\n");
 	wprintf(&shell_wnd, "train clear      ----    clear train buffer\n");
 	wprintf(&shell_wnd, "train switch #C  ----    set switch to position\n");
 	wprintf(&shell_wnd, "                         # must be 1-9, C must be G or R\n");

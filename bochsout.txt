@@ -31,7 +31,7 @@
 00000000000i[      ]   SB16 support: no
 00000000000i[      ]   USB support: no
 00000000000i[      ]   VGA extension support: vbe
-00000000000i[MEM0  ] allocated memory at 0x7f3828900010. after alignment, vector=0x7f3828901000
+00000000000i[MEM0  ] allocated memory at 0x7f584b5b5010. after alignment, vector=0x7f584b5b6000
 00000000000i[MEM0  ] 8.00MB
 00000000000i[MEM0  ] mem block size = 0x00100000, blocks=8
 00000000000i[MEM0  ] rom at 0xfffe0000/131072 ('/usr/share/bochs/BIOS-bochs-latest')
@@ -41,7 +41,7 @@
 00000000000i[DEV   ] PIIX3 PCI-to-ISA bridge present at device 1, function 0
 00000000000i[PLUGIN] init_dev of 'cmos' plugin device by virtual method
 00000000000i[CMOS  ] Using local time for initial clock
-00000000000i[CMOS  ] Setting initial clock to: Sun May  8 03:13:41 2016 (time0=1462702421)
+00000000000i[CMOS  ] Setting initial clock to: Sun May  8 18:53:45 2016 (time0=1462758825)
 00000000000i[PLUGIN] init_dev of 'dma' plugin device by virtual method
 00000000000i[DMA   ] channel 4 used by cascade
 00000000000i[PLUGIN] init_dev of 'pic' plugin device by virtual method
@@ -162,26 +162,61 @@
 00001593366i[VBIOS ] VGABios $Id: vgabios.c,v 1.76 2013/02/10 08:07:03 vruppert Exp $
 00001596373i[VBIOS ] VBE Bios $Id: vbe.c,v 1.65 2014/07/08 18:02:25 vruppert Exp $
 00032314406i[BIOS  ] Booting from 0000:7c00
-00070312740i[BIOS  ] int13_cdrom: function 00, ELDL out of range f7
-00239640000p[SDL   ] >>PANIC<< User requested shutdown.
-00239640000i[CPU0  ] CPU is in protected mode (active)
-00239640000i[CPU0  ] CS.mode = 32 bit
-00239640000i[CPU0  ] SS.mode = 32 bit
-00239640000i[CPU0  ] EFER   = 0x00000000
-00239640000i[CPU0  ] | EAX=0000b9e4  EBX=00000004  ECX=00000006  EDX=00000000
-00239640000i[CPU0  ] | ESP=0009fff4  EBP=00000000  ESI=0000ffff  EDI=000014c0
-00239640000i[CPU0  ] | IOPL=0 id vip vif ac vm rf nt of df IF tf sf zf af PF cf
-00239640000i[CPU0  ] | SEG sltr(index|ti|rpl)     base    limit G D
-00239640000i[CPU0  ] |  CS:0008( 0001| 0|  0) 00000000 ffffffff 1 1
-00239640000i[CPU0  ] |  DS:0010( 0002| 0|  0) 00000000 ffffffff 1 1
-00239640000i[CPU0  ] |  SS:0010( 0002| 0|  0) 00000000 ffffffff 1 1
-00239640000i[CPU0  ] |  ES:0010( 0002| 0|  0) 00000000 ffffffff 1 1
-00239640000i[CPU0  ] |  FS:0010( 0002| 0|  0) 00000000 ffffffff 1 1
-00239640000i[CPU0  ] |  GS:0010( 0002| 0|  0) 00000000 ffffffff 1 1
-00239640000i[CPU0  ] | EIP=00007413 (00007413)
-00239640000i[CPU0  ] | CR0=0x60000011 CR2=0x00000000
-00239640000i[CPU0  ] | CR3=0x00000000 CR4=0x00000000
-00239640000i[CPU0  ] 0x00007413>> jmp .-2 (0x00007413) : EBFE
-00239640000i[CMOS  ] Last time is 1462702444 (Sun May  8 03:14:04 2016)
-00239640000i[      ] restoring default signal behavior
-00239640000i[SIM   ] quit_sim called with exit code 1
+00835456811i[SER   ]  -- COM 1 : read byte [42]
+00835498471i[SER   ]  -- COM 1 : read byte [48]
+00835540131i[SER   ]  -- COM 1 : read byte [13]
+01030581791i[SER   ]  -- COM 1 : read byte [42]
+01030623451i[SER   ]  -- COM 1 : read byte [49]
+01030665111i[SER   ]  -- COM 1 : read byte [13]
+01208706771i[SER   ]  -- COM 1 : read byte [42]
+01208748431i[SER   ]  -- COM 1 : read byte [48]
+01208790091i[SER   ]  -- COM 1 : read byte [13]
+01395831751i[SER   ]  -- COM 1 : read byte [42]
+01395873411i[SER   ]  -- COM 1 : read byte [49]
+01395915071i[SER   ]  -- COM 1 : read byte [13]
+01728956731i[SER   ]  -- COM 1 : read byte [42]
+01728998391i[SER   ]  -- COM 1 : read byte [48]
+01729040051i[SER   ]  -- COM 1 : read byte [13]
+01912081711i[SER   ]  -- COM 1 : read byte [42]
+01912123371i[SER   ]  -- COM 1 : read byte [49]
+01912165031i[SER   ]  -- COM 1 : read byte [13]
+02365206691i[SER   ]  -- COM 1 : read byte [42]
+02365248351i[SER   ]  -- COM 1 : read byte [49]
+02365290011i[SER   ]  -- COM 1 : read byte [13]
+02559331671i[SER   ]  -- COM 1 : read byte [42]
+02559373331i[SER   ]  -- COM 1 : read byte [48]
+02559414991i[SER   ]  -- COM 1 : read byte [13]
+02911456651i[SER   ]  -- COM 1 : read byte [42]
+02911498311i[SER   ]  -- COM 1 : read byte [49]
+02911539971i[SER   ]  -- COM 1 : read byte [13]
+03299581631i[SER   ]  -- COM 1 : read byte [42]
+03299623291i[SER   ]  -- COM 1 : read byte [48]
+03299664951i[SER   ]  -- COM 1 : read byte [13]
+03477706611i[SER   ]  -- COM 1 : read byte [42]
+03477748271i[SER   ]  -- COM 1 : read byte [49]
+03477789931i[SER   ]  -- COM 1 : read byte [13]
+03926831591i[SER   ]  -- COM 1 : read byte [42]
+03926873251i[SER   ]  -- COM 1 : read byte [48]
+03926914911i[SER   ]  -- COM 1 : read byte [13]
+956152890000p[SDL   ] >>PANIC<< User requested shutdown.
+956152890000i[CPU0  ] CPU is in protected mode (active)
+956152890000i[CPU0  ] CS.mode = 32 bit
+956152890000i[CPU0  ] SS.mode = 32 bit
+956152890000i[CPU0  ] EFER   = 0x00000000
+956152890000i[CPU0  ] | EAX=00000030  EBX=00000000  ECX=00000006  EDX=0000ae78
+956152890000i[CPU0  ] | ESP=0007bfec  EBP=00000000  ESI=00000000  EDI=00000000
+956152890000i[CPU0  ] | IOPL=0 id vip vif ac vm rf nt of df IF tf sf zf af PF cf
+956152890000i[CPU0  ] | SEG sltr(index|ti|rpl)     base    limit G D
+956152890000i[CPU0  ] |  CS:0008( 0001| 0|  0) 00000000 ffffffff 1 1
+956152890000i[CPU0  ] |  DS:0010( 0002| 0|  0) 00000000 ffffffff 1 1
+956152890000i[CPU0  ] |  SS:0010( 0002| 0|  0) 00000000 ffffffff 1 1
+956152890000i[CPU0  ] |  ES:0010( 0002| 0|  0) 00000000 ffffffff 1 1
+956152890000i[CPU0  ] |  FS:0010( 0002| 0|  0) 00000000 ffffffff 1 1
+956152890000i[CPU0  ] |  GS:0010( 0002| 0|  0) 00000000 ffffffff 1 1
+956152890000i[CPU0  ] | EIP=0000735e (0000735e)
+956152890000i[CPU0  ] | CR0=0x60000011 CR2=0x00000000
+956152890000i[CPU0  ] | CR3=0x00000000 CR4=0x00000000
+956152890000i[CPU0  ] 0x0000735e>> jmp .-2 (0x0000735e) : EBFE
+956152890000i[CMOS  ] Last time is 1462854440 (Mon May  9 21:27:20 2016)
+956152890000i[      ] restoring default signal behavior
+956152890000i[SIM   ] quit_sim called with exit code 1
