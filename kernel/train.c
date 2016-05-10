@@ -255,60 +255,61 @@ int get_train_wagon_config()
 
 void runConfig1or2(int zamboniConfig)
 {
-		//	Set switches for wagon pickup
-		train_set_switch('3', 'G');
-		train_set_switch('2', 'G');
-	
-		//	wait for zamboni to go by
-		if(zamboniConfig)
-		{
-			while(!get_status_of_contact("6"));
-		}
-	
-		set_train_speed("5");
-		
-		//	set switch so zamboni will be trapped in loop
-		train_set_switch('8', 'R');
-	
-		//	wait for zamboni to pass wagon
-		if(zamboniConfig)
-		{
-			while(!get_status_of_contact("4"));
-		}
-		
-		//	set switch so train can get wagon
-		train_set_switch('4', 'R');
-		
-		//	slow down train once it's close to the wagon
+	//	Set switches for wagon pickup
+	train_set_switch('3', 'G');
+	train_set_switch('2', 'G');
+
+	//	wait for zamboni to go by
+	if(zamboniConfig)
+	{
 		while(!get_status_of_contact("6"));
-		while(get_status_of_contact("6"));
-		set_train_speed("4");
-		
-		//	detect pickup of wagon
-		while(!get_status_of_contact("1"));
-		set_train_speed("0");
-		train_set_switch('4', 'G');
-	
-		//	make sure zamboni is in loop
-		if(zamboniConfig)
-		{
-			while(!get_status_of_contact("12"));
-		}
-	
-		//	send the train home
-		train_switch_directions();
-		set_train_speed("5");
-	
-		train_set_switch('5', 'R');
-		train_set_switch('6', 'R');
-		
-		//	wait for arrival and stop
-		while(!get_status_of_contact("7"));
-		while(get_status_of_contact("7"));
-		set_train_speed("0");
-		
-		//	restore outer track config
-		train_set_switch('5', 'G');
+	}
+
+	set_train_speed("5");
+
+	//	set switch so zamboni will be trapped in loop
+	train_set_switch('8', 'R');
+
+	//	wait for zamboni to pass wagon
+	if(zamboniConfig)
+	{
+		while(!get_status_of_contact("4"));
+	}
+
+	//	set switch so train can get wagon
+	train_set_switch('4', 'R');
+
+	//	slow down train once it's close to the wagon
+	while(!get_status_of_contact("6"));
+	while(get_status_of_contact("6"));
+	set_train_speed("4");
+
+	//	detect pickup of wagon
+	while(!get_status_of_contact("1"));
+	set_train_speed("0");
+	train_set_switch('4', 'G');
+
+	//	make sure zamboni is in loop
+	if(zamboniConfig)
+	{
+		while(!get_status_of_contact("12"));
+	}
+
+	//	send the train home
+	train_switch_directions();
+	set_train_speed("5");
+
+	train_set_switch('5', 'R');
+	train_set_switch('6', 'R');
+
+	//	wait for arrival and stop
+	while(!get_status_of_contact("7"));
+	while(get_status_of_contact("7"));
+	set_train_speed("0");
+	wprintf(&train_wnd, "Home Safe!\n");
+
+	//	restore outer track config
+	train_set_switch('5', 'G');
 }
 
 void runConfig3(int zamboniConfig)
@@ -318,6 +319,13 @@ void runConfig3(int zamboniConfig)
 	train_set_switch('3', 'R');
 	train_set_switch('2', 'R');
 	
+	//	Waiting for Zamboni
+	if(zamboniConfig)
+	{
+		wprintf(&train_wnd, "Waiting for Zamboni\n");
+		while(!get_status_of_contact("4"));
+	}
+	
 	//	put train on outer loop, head for wagon
 	wprintf(&train_wnd, "Turning around\n");
 	set_train_speed("5");
@@ -325,21 +333,42 @@ void runConfig3(int zamboniConfig)
 	set_train_speed("0");
 	train_switch_directions();
 	set_train_speed("5");
-	
-	//	set switch to get wagon, halt the train
 	wprintf(&train_wnd, "Getting wagon\n");
+	
+	//	Let Zamboni pass track segment 13 before setting switch
+	if(zamboniConfig)
+	{
+		while(!get_status_of_contact("10"));
+	}
 	train_set_switch('8', 'R');
 	while(get_status_of_contact("11"));
 	set_train_speed("0");
 	train_switch_directions();
+	train_set_switch('8', 'G');
+	
+	//	Waiting for Zamboni
+	if(zamboniConfig)
+	{
+		wprintf(&train_wnd, "Waiting for Zamboni\n");
+		while(!get_status_of_contact("7"));
+	}
 	
 	//	train back to home
 	wprintf(&train_wnd, "Going home\n");
 	set_train_speed("5");
+	//	wait for zamboni to pass home, before setting outer loop switch
+	if(zamboniConfig)
+	{
+		while(!get_status_of_contact("4"));
+	}
 	train_set_switch('4', 'R');
 	while(!get_status_of_contact("6"));
 	while(get_status_of_contact("6"));
 	set_train_speed("0");
+	wprintf(&train_wnd, "Home Safe!\n");
+	
+	//Return outer loop continuity
+	train_set_switch('4', 'G');
 }
 
 void runConfig4(int zamboniConfig)
@@ -355,25 +384,58 @@ void runConfig4(int zamboniConfig)
 	train_switch_directions();
 	set_train_speed("5");
 	
-	//	redirect zamboni
-	while(get_status_of_contact("6"));
-	train_set_switch('4', 'R');
-	train_set_switch('3', 'G');
+	//	redirect zamboni, wait at 3
+	if(zamboniConfig)
+	{
+		wprintf(&train_wnd, "Redirecting Zamboni\n");
+		while(get_status_of_contact("6"));
+		train_set_switch('4', 'R');
+		train_set_switch('3', 'G');
+
+		wprintf(&train_wnd, "Waiting for Zamboni at track 3\n");
+		while(!get_status_of_contact("3"));
+		set_train_speed("0");
+		while(!get_status_of_contact("14"));
+		set_train_speed("5");
+	}
 	
-	//	wait at 3
-	wprintf(&train_wnd, "Waiting for Zamboni at track 3\n");
-	while(!get_status_of_contact("3"));
-	set_train_speed("0");
-	set_train_speed("5");
-	
-	//	turn wagon around, connect to wagon
+	//	turn train around, connect to wagon
 	wprintf(&train_wnd, "Getting the wagon\n");
 	while(!get_status_of_contact("14"));
 	set_train_speed("0");
 	train_switch_directions();
 	set_train_speed("5");
 	while(get_status_of_contact("14"));
+	
+	//	carriage is on a spur, so wait a bit before stopping
+	sleep(85);
 	set_train_speed("0");
+	train_switch_directions();
+	
+	//	Wait for zamboni
+	if(zamboniConfig)
+	   {
+			wprintf(&train_wnd, "Waiting for Zamboni\n");
+			while(!get_status_of_contact("7"));   
+	   }
+	
+	//	Go home
+	wprintf(&train_wnd, "Going home\n");
+	set_train_speed("5");
+	train_set_switch('4', 'G');
+	train_set_switch('3', 'R');
+	//	wait for zamboni to pass before throwing switch
+	if(zamboniConfig)
+	   {
+			wprintf(&train_wnd, "Waiting for Zamboni to pass home plate\n");
+			while(!get_status_of_contact("4"));   
+	   }
+	train_set_switch('4', 'R');
+	while(!get_status_of_contact("6"));
+	while(get_status_of_contact("6"));
+	set_train_speed("0");
+	wprintf(&train_wnd, "Home Safe!\n");
+	train_set_switch('4', 'G');
 }
 
 void get_wagon(int trainConfig, int zamboniConfig)
@@ -406,8 +468,8 @@ void train_process(PROCESS self, PARAM param)
 	init_track();
 	
 	//	determine disposition of Zamboni
-	//int zamboniConfig = get_zamboni_condition();
-	int zamboniConfig = 0;
+	int zamboniConfig = get_zamboni_condition();
+	//int zamboniConfig = 0;
 	
 	//	determine config of train/wagon
 	int trainConfig = get_train_wagon_config();
