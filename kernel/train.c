@@ -340,6 +340,22 @@ void runConfig3(int zamboniConfig)
 	set_train_speed("5");
 	wprintf(&train_wnd, "Getting wagon\n");
 	
+	//	redirect zamboni, wait at 3
+	if(zamboniConfig)
+	{
+		wprintf(&train_wnd, "Redirecting Zamboni\n");
+		while(get_status_of_contact("6"));
+		train_set_switch('4', 'R');
+		train_set_switch('3', 'G');
+
+		wprintf(&train_wnd, "Waiting for Zamboni at track 3\n");
+		while(!get_status_of_contact("3"));
+		set_train_speed("0");
+		while(!get_status_of_contact("14"));
+		sleep(75);
+		set_train_speed("5");
+	}
+	
 	//	Let Zamboni pass track segment 13 before setting switch
 	if(zamboniConfig)
 	{
@@ -367,6 +383,7 @@ void runConfig3(int zamboniConfig)
 		while(!get_status_of_contact("4"));
 	}
 	train_set_switch('4', 'R');
+	train_set_switch('3', 'R');
 	while(!get_status_of_contact("6"));
 	while(get_status_of_contact("6"));
 	set_train_speed("0");
