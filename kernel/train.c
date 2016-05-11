@@ -148,6 +148,9 @@ int send_train_command(char* outBuf, char* inBuf, int len_inBuf)
 //	initialize the track, set switch positions
 void init_track()
 {
+	//	make sure train is immobile
+	set_train_speed("0");
+	
 	//	Set switches so that Zamboni will not crash
 	train_set_switch('5', 'G');
 	train_set_switch('8', 'G');
