@@ -167,6 +167,7 @@ int get_zamboni_condition()
 	int retVal = 0;
 	int i = 0;
 	
+	wprintf(&train_wnd, "Searching for Zamboni");
 	//	Watch for Zamboni. Counter should be large enough that Zomboni could make a complete circuit
 	for(i = 0; i < 20; i++)
 	{
@@ -174,8 +175,10 @@ int get_zamboni_condition()
 		if(get_status_of_contact("10"))
 		{
 			retVal = 1;
+			wprintf(&train_wnd, "\nFound Zamboni\n");
 			break;
 		}
+		wprintf(&train_wnd, ".");
 	}
 	for(i = 0; i < 3; i++)
 	{
@@ -373,6 +376,8 @@ void runConfig3(int zamboniConfig)
 
 void runConfig4(int zamboniConfig)
 {
+	int on13 = 0;
+	
 	//	init switches
 	train_set_switch('9', 'G');
 	
@@ -404,19 +409,44 @@ void runConfig4(int zamboniConfig)
 	while(!get_status_of_contact("14"));
 	set_train_speed("0");
 	train_switch_directions();
+	
+	//	check to see that train is on track 13
+	//	this determines how long the train should reverse on the spur
+	if(get_status_of_contact("13"))
+	{
+		on13 = 1;
+		wprintf(&train_wnd, "Stopped to reverse on track 13\n");
+	}
+	else
+	{
+		wprintf(&train_wnd, "Stopped to reverse on track 14\n");	
+	}
+	
 	set_train_speed("5");
 	while(get_status_of_contact("14"));
 	
 	//	carriage is on a spur, so wait a bit before stopping
-	sleep(85);
+	//	boolean will protect against inadvertent run-offs
+	if(on13)
+	{
+		sleep(80);
+	}
+	else
+	{
+		sleep(5);	
+	}
 	set_train_speed("0");
 	train_switch_directions();
 	
 	//	Wait for zamboni
 	if(zamboniConfig)
 	   {
-			wprintf(&train_wnd, "Waiting for Zamboni\n");
-			while(!get_status_of_contact("7"));   
+			wprintf(&train_wnd, "Waiting for Zamboni");
+			while(!get_status_of_contact("7"))
+			{
+				wprintf(&train_wnd, ".");
+			}
+		wprintf(&train_wnd, "\n");
 	   }
 	
 	//	Go home
