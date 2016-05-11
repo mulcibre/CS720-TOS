@@ -262,42 +262,41 @@ void runConfig1or2(int zamboniConfig)
 	train_set_switch('3', 'G');
 	train_set_switch('2', 'G');
 
-	//	wait for zamboni to go by
+	wprintf(&train_wnd, "Waiting for Zamboni to pass wagon\n");
+	//	wait for zamboni to go by wagon
 	if(zamboniConfig)
 	{
-		while(!get_status_of_contact("6"));
+		while(!get_status_of_contact("3"));
 	}
 
 	set_train_speed("5");
-
+	
 	//	set switch so zamboni will be trapped in loop
 	train_set_switch('8', 'R');
 
-	//	wait for zamboni to pass wagon
-	if(zamboniConfig)
-	{
-		while(!get_status_of_contact("4"));
-	}
-
 	//	set switch so train can get wagon
 	train_set_switch('4', 'R');
-
+	wprintf(&train_wnd, "Trapping Zamboni in small loop\n");
+	
 	//	slow down train once it's close to the wagon
 	while(!get_status_of_contact("6"));
 	while(get_status_of_contact("6"));
-	set_train_speed("4");
+	//	Won't need this on actual train set
+	//set_train_speed("4");
 
 	//	detect pickup of wagon
 	while(!get_status_of_contact("1"));
 	set_train_speed("0");
 	train_set_switch('4', 'G');
 
+	wprintf(&train_wnd, "Ensure Zamboni is trapped\n");
 	//	make sure zamboni is in loop
 	if(zamboniConfig)
 	{
 		while(!get_status_of_contact("12"));
 	}
 
+	wprintf(&train_wnd, "Heading home\n");
 	//	send the train home
 	train_switch_directions();
 	set_train_speed("5");
