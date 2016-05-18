@@ -8,6 +8,152 @@ WINDOW pacMan_wnd = {60, 0, 61, 16, 0, 0, 0xDC};
 
 int trainRunning = 0;
 #define WAIT_TICKS     25
+
+/*
+	Command Table
+*/
+
+struct table_entry {
+	char *cmdname;
+	int (*cmd)();
+};
+
+int nothingcommand() { return 0; }
+
+int showProcessesCommand(char* param1, char* param2)
+{
+	print_all_processes(&shell_wnd);
+	return 1;
+}
+
+int clearWindowCommand(char* param1, char* param2)
+{
+	clear_window(&shell_wnd);
+	return 1;
+}
+
+int showHelpCommand(char* param1, char* param2)
+{
+	showHelp(&shell_wnd);
+	return 1;
+}
+
+int trainCommand(char* param1, char* param2)
+{
+	if(stringCompare(param1, "clear") == 0 && stringCompare(param2, "") == 0)
+			{
+				train_clear_mem_buffer();
+				return 0;
+			}
+			//	train speed setting
+			else if(stringCompare(param1, "speed") == 0)
+			{
+				if(param2[1] == 0 && param2[0] >= '0' && param2[0] <= '5')
+				{
+					set_train_speed(&param2[0]);
+					return 0;
+				}
+				else
+				{
+					wprintf(&shell_wnd, "Invalid Speed Selection\n");
+					return -1;
+				}
+			}
+			else if(stringCompare(param1, "switch") == 0)
+			{
+				if(param2[2] != 0)
+				{
+					wprintf(&shell_wnd, "Invalid switch command format\n");
+					wprintf(&shell_wnd, "Must be of form train switch #C\n");
+					wprintf(&shell_wnd, "Where # is [1-9] and C is 'R' or 'G'\n");	
+					return -1;
+				}
+				if(param2[0] < '1' || param2[0] > '9')
+				{
+					wprintf(&shell_wnd, "Invalid switch identifier\n");	
+					return -1;
+				}
+				if(param2[1] != 'G' && param2[1] != 'R')
+				{
+					wprintf(&shell_wnd, "Invalid switch position\n");	
+					return -1;
+				}
+				train_set_switch(param2[0], param2[1]);
+				return 0;
+			}
+			else if(stringCompare(param1, "see") == 0)
+			{
+				//	Only allow second parameter length of 2
+				if(strlen(param2) > 2 || param2[0] == 0)
+				   {
+						wprintf(&shell_wnd, "Invalid parameter 2 length\n");	
+						return -1;
+				   }
+				   else
+				   {
+					   	if(get_status_of_contact(param2) == 0)
+						{
+							wprintf(&shell_wnd, "train not detected\n");
+						}
+					   	else
+					  	{
+					   		wprintf(&shell_wnd, "train found on track ");
+					   		wprintf(&shell_wnd, param2);
+					   		wprintf(&shell_wnd, "\n");
+					   	}
+					   return 0;
+				   }
+			}
+			else if(stringCompare(param1, "rev") == 0)
+			{
+				wprintf(&shell_wnd, "Reversing train direction\n");
+				train_switch_directions();
+				//switch_train_direction(&train_wnd);
+				return 0;
+			}
+			else if(stringCompare(param1, "run") == 0 && stringCompare(param2, "") == 0)
+			{
+				wprintf(&shell_wnd, "Train Executing\n");
+				trainRunning = 0;
+				init_train(&train_wnd);
+				return 0;
+			}
+			else
+			{
+				wprintf(&shell_wnd, "See 'help' for list of train commands\n");	
+				return -1;
+			}
+	return 1;
+}
+
+int pacmanCommand(char* param1, char* param2)
+{
+	wprintf(&shell_wnd, "Pacman Executing\n");
+	init_pacman(&pacMan_wnd,4);
+	return 1;
+}
+
+struct table_entry cmds[] = 
+{
+  	{"ps", showProcessesCommand},
+  	{"clear", clearWindowCommand},
+  	{"help", showHelpCommand},
+  	{"train", trainCommand},
+  	{"pacman", pacmanCommand},
+  	{"", 0}
+};
+
+int (*getfn(const char *word))() {
+  struct table_entry* p;
+  for (p = cmds; p->cmd; ++p) {
+    if (!stringCompare(word, p->cmdname)) {
+      return p->cmd;
+    }
+  }
+  wprintf(&shell_wnd, "Command not found\n");
+  return nothingcommand;
+}
+
 /*
 	Command Parser
 */
@@ -159,6 +305,9 @@ void shell_process(PROCESS self, PARAM param)
 	char ch;
  	Keyb_Message msg; 	
 	
+ 	//	Command
+ 	int (*func)(param1, param2);
+
 	while (1) {
 		//	reset vars after each command is processed
 		ch = 0;
@@ -217,125 +366,11 @@ void shell_process(PROCESS self, PARAM param)
 	}
 } 
 
-/*
-	Command Tree
-*/
-
 int executeCommand(char* command, char* param1, char* param2)
 {
-		//	Some basic commands
-		if(stringCompare(command, "ps") == 0)
-		{
-			print_all_processes(&shell_wnd);
-			return 0;
-		}
-		else if(stringCompare(command, "clear") == 0)
-		{
-			clear_window(&shell_wnd);
-			return 0;
-		}
-		else if(stringCompare(command, "help") == 0)
-		{
-			showHelp();
-			return 0;
-		}
-		//	Train related commands
-		else if(stringCompare(command, "train") == 0)
-		{
-			if(stringCompare(param1, "clear") == 0 && stringCompare(param2, "") == 0)
-			{
-				train_clear_mem_buffer();
-				return 0;
-			}
-			//	train speed setting
-			else if(stringCompare(param1, "speed") == 0)
-			{
-				if(param2[1] == 0 && param2[0] >= '0' && param2[0] <= '5')
-				{
-					set_train_speed(&param2[0]);
-					return 0;
-				}
-				else
-				{
-					wprintf(&shell_wnd, "Invalid Speed Selection\n");
-					return -1;
-				}
-			}
-			else if(stringCompare(param1, "switch") == 0)
-			{
-				if(param2[2] != 0)
-				{
-					wprintf(&shell_wnd, "Invalid switch command format\n");
-					wprintf(&shell_wnd, "Must be of form train switch #C\n");
-					wprintf(&shell_wnd, "Where # is [1-9] and C is 'R' or 'G'\n");	
-					return -1;
-				}
-				if(param2[0] < '1' || param2[0] > '9')
-				{
-					wprintf(&shell_wnd, "Invalid switch identifier\n");	
-					return -1;
-				}
-				if(param2[1] != 'G' && param2[1] != 'R')
-				{
-					wprintf(&shell_wnd, "Invalid switch position\n");	
-					return -1;
-				}
-				train_set_switch(param2[0], param2[1]);
-				return 0;
-			}
-			else if(stringCompare(param1, "see") == 0)
-			{
-				//	Only allow second parameter length of 2
-				if(strlen(param2) > 2 || param2[0] == 0)
-				   {
-						wprintf(&shell_wnd, "Invalid parameter 2 length\n");	
-						return -1;
-				   }
-				   else
-				   {
-					   	if(get_status_of_contact(param2) == 0)
-						{
-							wprintf(&shell_wnd, "train not detected\n");
-						}
-					   	else
-					  	{
-					   		wprintf(&shell_wnd, "train found on track ");
-					   		wprintf(&shell_wnd, param2);
-					   		wprintf(&shell_wnd, "\n");
-					   	}
-					   return 0;
-				   }
-			}
-			else if(stringCompare(param1, "rev") == 0)
-			{
-				wprintf(&shell_wnd, "Reversing train direction\n");
-				train_switch_directions();
-				//switch_train_direction(&train_wnd);
-				return 0;
-			}
-			else if(stringCompare(param1, "run") == 0 && stringCompare(param2, "") == 0)
-			{
-				wprintf(&shell_wnd, "Train Executing\n");
-				trainRunning = 0;
-				init_train(&train_wnd);
-				return 0;
-			}
-			else
-			{
-				wprintf(&shell_wnd, "See 'help' for list of train commands\n");	
-				return -1;
-			}
-		}
-		else if(stringCompare(command, "pacman") == 0)
-		{
-			wprintf(&shell_wnd, "Pacman Executing\n");
-			init_pacman(&pacMan_wnd,4);
-			return 0;
-		}
-		//	No correct command was entered
-		wprintf(&shell_wnd, "Invalid Command. Enter 'help' for list of commands\n");
-		return -1;
-		
+	int (*func)(param1, param2) = getfn(command);
+  	(*func)(param1, param2);
+	return 0;
 }
 
 int stringCompare(char* str1, char* str2)

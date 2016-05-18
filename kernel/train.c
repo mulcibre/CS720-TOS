@@ -285,7 +285,7 @@ void runConfig1or2(int zamboniConfig)
 	while(!get_status_of_contact("6"));
 	while(get_status_of_contact("6"));
 	//	Won't need this on actual train set
-	//set_train_speed("4");
+	set_train_speed("4");
 
 	//	detect pickup of wagon
 	while(!get_status_of_contact("1"));
@@ -362,6 +362,7 @@ void runConfig3(int zamboniConfig)
 		while(!get_status_of_contact("10"));
 	}
 	train_set_switch('8', 'R');
+	train_set_switch('4', 'G');
 	while(get_status_of_contact("11"));
 	set_train_speed("0");
 	train_switch_directions();
